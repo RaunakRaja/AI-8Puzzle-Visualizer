@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>8-Puzzle Search Visualizer — DFS</title>
+
+<!-- Bootstrap 5 (required UI framework) — used for grid/utility classes;
+     visual identity is layered on top in css/style.css -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="container topnav-inner">
+    <span class="brand">8-Puzzle<span class="brand-accent">.search</span></span>
+    <div class="nav-links">
+      <button class="nav-link active" data-page="home">Home</button>
+      <button class="nav-link" data-page="solver">Solver</button>
+      <button class="nav-link" data-page="algoinfo">Algorithm Info</button>
+      <button class="nav-link" data-page="comparison">Comparison</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ HOME ============ -->
+<section id="page-home" class="page-section active">
+  <div class="container home-hero">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <p class="course-tag">Artificial Intelligence — Digital Assignment (Case Study)</p>
+        <h1>An interactive 8-Puzzle solver built on state-space search.</h1>
+        <p class="hero-sub">
+          This tool models the 8-Puzzle as a graph of states and walks it one expansion
+          at a time, so you can see exactly how the search decides what to try next —
+          what's on the stack, what's already been explored, and how the final path
+          gets stitched together from parent pointers.
+        </p>
+        <div class="hero-meta">
+          <div><span class="meta-label">Student</span><span class="meta-value">Raunak Raja <em></em></span></div>
+          <div><span class="meta-label">Registration No.</span><span class="meta-value">24BCE0057</span></div>
+          <div><span class="meta-label">Assigned Algorithm</span><span class="meta-value">Algorithm 2 — Depth-First Search (DFS)</span></div>
+        </div>
+        <button class="btn-primary" onclick="document.querySelector('[data-page=solver]').click()">Open the Solver →</button>
+      </div>
+      <div class="hero-puzzle" id="hero-puzzle"></div>
+    </div>
+
+    <div class="intro-block">
+      <h2>What is the 8-Puzzle Problem?</h2>
+      <p>
+        The 8-Puzzle is a sliding-tile puzzle played on a 3×3 grid holding eight
+        numbered tiles and one blank space. Any tile adjacent to the blank can
+        slide into it, which is equivalent to saying the blank itself moves up,
+        down, left, or right. Starting from some scrambled arrangement, the goal
+        is to reach a specified target arrangement using the fewest possible
+        moves.
+      </p>
+      <p>
+        Framed as a search problem: each arrangement of tiles is a <strong>state</strong>,
+        each legal slide is an <strong>action</strong> connecting two states, and solving
+        the puzzle means finding a path through this state-space graph from the
+        initial state to the goal state. Because the graph is far too large to
+        draw by hand (181,440 reachable states for any given goal), it has to be
+        explored algorithmically — which is exactly what BFS, DFS, DLS, IDDFS,
+        Uniform Cost Search, Greedy Best-First Search, and A* are each designed
+        to do differently. This build implements the search assigned for this
+        submission: <strong>Depth-First Search</strong>.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SOLVER ============ -->
+<section id="page-solver" class="page-section">
+  <div class="container">
+
+    <div class="algo-badge">
+      Algorithm assigned: <strong>DFS — Depth-First Search</strong> (Algorithm 2). Per the
+      assignment brief, only this algorithm is implemented in this build.
+    </div>
+
+    <div class="panel-grid">
+      <!-- LEFT: input + controls -->
+      <div class="col-left">
+
+        <div class="card">
+          <h3>1 · Puzzle Input</h3>
+          <p class="card-sub">Enter digits 0–8 (0 = blank), or generate a random solvable puzzle.</p>
+
+          <div class="input-pair">
+            <div>
+              <label>Initial State</label>
+              <div id="initial-input-grid" class="input-grid"></div>
+            </div>
+            <div>
+              <label>Goal State</label>
+              <div id="goal-input-grid" class="input-grid"></div>
+            </div>
+          </div>
+
+          <div id="input-validation-msg" class="validation-msg"></div>
+
+          <div class="btn-row">
+            <button id="btn-load-example" class="btn-secondary">Load Assignment Example</button>
+            <button id="btn-random" class="btn-secondary">Generate Random Puzzle</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>2 · Advanced Settings</h3>
+          <p class="card-sub">
+            DFS can wander extremely deep down an unproductive branch before ever
+            backtracking, so a depth cutoff and a node cap keep the search bounded and
+            the browser responsive — see <button class="link-btn" onclick="document.querySelector('[data-page=algoinfo]').click()">Algorithm Info</button> for why. The defaults below
+            reliably solve the built-in example; harder or randomly generated puzzles
+            may report "no solution found" at these bounds — that's expected DFS
+            behavior, not a bug. Raise the limits or try another puzzle if that happens.
+          </p>
+          <div class="settings-row">
+            <label>Max Depth Limit
+              <input type="number" id="input-maxdepth" value="30" min="1" max="100">
+            </label>
+            <label>Node Generation Cap
+              <input type="number" id="input-nodelimit" value="40000" min="100" max="300000">
+            </label>
+          </div>
+          <button id="btn-run" class="btn-primary btn-run">Run DFS Search</button>
+        </div>
+
+        <div class="card">
+          <h3>3 · Playback Controls</h3>
+          <div class="btn-row wrap">
+            <button id="btn-play" class="btn-control">▶ Play</button>
+            <button id="btn-pause" class="btn-control">⏸ Pause</button>
+            <button id="btn-resume" class="btn-control">⏵ Resume</button>
+            <button id="btn-prev" class="btn-control">⏮ Previous Step</button>
+            <button id="btn-next" class="btn-control">⏭ Next Step</button>
+            <button id="btn-reset-playback" class="btn-control">↺ Reset</button>
+            <label class="speed-label">Speed
+              <select id="select-speed">
+                <option value="1000">Slow (1s)</option>
+                <option value="500" selected>Normal (0.5s)</option>
+                <option value="200">Fast (0.2s)</option>
+                <option value="60">Very Fast</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: visualization -->
+      <div class="col-right">
+
+        <div class="card">
+          <h3>Puzzle Visualization</h3>
+          <div class="triple-board">
+            <div><span class="board-label">Initial</span><div id="viz-initial"></div></div>
+            <div><span class="board-label">Current</span><div id="viz-current"></div></div>
+            <div><span class="board-label">Goal</span><div id="viz-goal"></div></div>
+          </div>
+          <p id="step-label" class="step-label">No search run yet</p>
+        </div>
+
+        <div class="card">
+          <h3>Search Process Visualization</h3>
+          <div class="stat-grid">
+            <div><span>Nodes Generated</span><strong id="stat-generated">—</strong></div>
+            <div><span>Nodes Expanded</span><strong id="stat-expanded">—</strong></div>
+            <div><span>Frontier Size</span><strong id="stat-frontier-size">—</strong></div>
+            <div><span>Explored Size</span><strong id="stat-explored-size">—</strong></div>
+            <div><span>Current Depth</span><strong id="stat-depth">—</strong></div>
+            <div><span>Path Cost g(n)</span><strong id="stat-pathcost">—</strong></div>
+            <div><span>Move Applied</span><strong id="stat-move">—</strong></div>
+          </div>
+
+          <div class="sub-panels">
+            <div>
+              <h4>Parent Node</h4>
+              <div id="viz-parent" class="single-mini"></div>
+            </div>
+            <div>
+              <h4>Frontier (Open List) — top of stack</h4>
+              <div id="frontier-list" class="mini-list"></div>
+            </div>
+            <div>
+              <h4>Explored (Closed List) — most recent</h4>
+              <div id="explored-list" class="mini-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="solution-summary" class="card hidden">
+          <h3>Solution Summary</h3>
+          <div class="summary-grid">
+            <div><span>Status</span><strong id="summary-status" class="value">—</strong></div>
+            <div><span>Total Moves</span><strong id="summary-moves">—</strong></div>
+            <div><span>Nodes Generated</span><strong id="summary-generated">—</strong></div>
+            <div><span>Nodes Expanded</span><strong id="summary-expanded">—</strong></div>
+            <div><span>Max Search Depth</span><strong id="summary-maxdepth">—</strong></div>
+            <div><span>Execution Time</span><strong id="summary-time">—</strong></div>
+            <div><span>Path Cost</span><strong id="summary-pathcost">—</strong></div>
+            <div><span>Approx. Memory</span><strong id="summary-memory">—</strong></div>
+          </div>
+          <button id="btn-play-solution" class="btn-primary" disabled>▶ Animate Final Solution Path</button>
+          <div class="triple-board single">
+            <div><span class="board-label" id="solution-step-label">Solution path</span><div id="viz-solution"></div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ALGORITHM INFO ============ -->
+<section id="page-algoinfo" class="page-section">
+  <div class="container narrow">
+    <h2>Algorithm Info — Depth-First Search</h2>
+
+    <div class="info-card">
+      <h4>Description</h4>
+      <p>Depth-First Search (DFS) is an uninformed state-space search strategy that always
+      expands the deepest unexpanded node in the current frontier first. It explores one
+      branch of the search tree as far as it will go before backtracking to try
+      alternatives, using a Last-In-First-Out (LIFO) stack to decide what to expand next.</p>
+
+      <h4>Working Principle</h4>
+      <p>Push the initial state onto a stack. Repeatedly pop the top state: if it is the
+      goal, stop and reconstruct the path via parent pointers; otherwise, if it has not
+      already been expanded, mark it explored and push each of its unvisited successors
+      onto the stack. Because the stack is LIFO, the most recently generated state is
+      always tried next, which is what drives the search deep into one branch before
+      it ever backtracks to a sibling.</p>
+
+      <h4>Advantages</h4>
+      <ul>
+        <li>Very low memory use relative to breadth-first strategies — the frontier only
+        ever needs to hold one path's worth of siblings, not an entire level of the tree.</li>
+        <li>Simple to implement iteratively with an explicit stack (no priority queue or
+        distance bookkeeping required).</li>
+        <li>Can find a solution quickly if a short path happens to lie along an
+        early-explored branch.</li>
+      </ul>
+
+      <h4>Limitations</h4>
+      <ul>
+        <li>Not optimal — the first solution DFS finds is rarely the shortest one, since
+        expansion order is driven purely by recency, not by cost.</li>
+        <li>Without a visited-set and a depth bound, DFS can wander down a very long,
+        unproductive branch, or loop forever in a graph with cycles.</li>
+        <li>Solution quality is highly sensitive to the order successors are generated in
+        (here: Up, Down, Left, Right).</li>
+      </ul>
+
+      <h4>Time Complexity</h4>
+      <p><code>O(b^m)</code>, where <code>b</code> is the branching factor (2–4 for the
+      8-Puzzle, depending on the blank's position) and <code>m</code> is the maximum
+      depth the search reaches — bounded in this implementation by the Max Depth Limit
+      setting.</p>
+
+      <h4>Space Complexity</h4>
+      <p><code>O(b·m)</code> — DFS only needs to remember the current path and the
+      unexplored siblings hanging off it, which is why its memory footprint is so much
+      lower than BFS's <code>O(b^d)</code>.</p>
+
+      <h4>Completeness</h4>
+      <p>The 8-Puzzle's reachable state space is finite (181,440 states for a given
+      parity class), so DFS with an explored-set is completein principle on this
+      graph — it will not loop forever. In practice, an unbounded search can still take
+      a very long time before it happens across the goal, which is why this build
+      applies a depth cutoff and a node-generation cap for a bounded, responsive demo.
+      With those bounds in place, DFS is <strong>not guaranteed complete</strong>: a
+      solution can exist beyond the depth limit and be missed.</p>
+
+      <h4>Optimality</h4>
+      <p><strong>Not optimal.</strong> DFS returns the first goal it reaches on the stack,
+      not the cheapest one — unlike BFS or Uniform Cost Search on unit-cost graphs, it
+      gives no guarantee that the reported path is the shortest possible solution.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COMPARISON ============ -->
+<section id="page-comparison" class="page-section">
+  <div class="container narrow">
+    <h2>Comparison</h2>
+    <p class="card-sub">
+      The assignment allots exactly one search algorithm per student — Algorithm 2
+      (DFS) for this submission — and the brief is explicit that "students must
+      implement only the algorithm allotted to them." This page therefore reports
+      live statistics for DFS only; the other six rows are left unimplemented by
+      design rather than filled with invented numbers.
+    </p>
+
+    <div class="table-wrap">
+      <table class="cmp-table">
+        <thead>
+          <tr><th>Algorithm</th><th>Solution Found</th><th>Nodes Expanded</th><th>Moves</th><th>Time</th><th>Memory</th></tr>
+        </thead>
+        <tbody>
+          <tr class="cmp-active">
+            <td>DFS (assigned)</td>
+            <td id="cmp-dfs-found">—</td>
+            <td id="cmp-dfs-expanded">—</td>
+            <td id="cmp-dfs-moves">—</td>
+            <td id="cmp-dfs-time">—</td>
+            <td id="cmp-dfs-memory">—</td>
+          </tr>
+          <tr class="cmp-inactive"><td>BFS</td><td colspan="5">Not implemented — outside this assignment's scope</td></tr>
+          <tr class="cmp-inactive"><td>DLS</td><td colspan="5">Not implemented — outside this assignment's scope</td></tr>
+          <tr class="cmp-inactive"><td>IDDFS</td><td colspan="5">Not implemented — outside this assignment's scope</td></tr>
+          <tr class="cmp-inactive"><td>Uniform Cost Search</td><td colspan="5">Not implemented — outside this assignment's scope</td></tr>
+          <tr class="cmp-inactive"><td>GBFS</td><td colspan="5">Not implemented — outside this assignment's scope</td></tr>
+          <tr class="cmp-inactive"><td>A*</td><td colspan="5">Not implemented — outside this assignment's scope</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="table-note">Run a search on the Solver page — this row updates automatically.</p>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">AI-8Puzzle-Visualizer · Artificial Intelligence Digital Assignment · Algorithm 2 (DFS)</div>
+</footer>
+
+<script src="js/puzzle.js"></script>
+<script src="js/dfs.js"></script>
+<script src="js/visualizer.js"></script>
+<script src="js/main.js"></script>
+<script>
+  // Decorative hero puzzle (static, non-interactive)
+  renderBoard(document.getElementById('hero-puzzle'), [1,2,3,8,0,4,7,6,5]);
+</script>
+</body>
+</html>
